@@ -1,29 +1,28 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	"log"
+	"net/http"
 	"time"
 )
 
 func main() {
-	ctx := context.Background() // main context
-	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
-	defer cancel()
-
-	// go func() {
-	// 	time.Sleep(time.Second * 3)
-	// 	cancel()
-	// }()
-
-	bookHotel(ctx)
+	http.HandleFunc("/", home)
+	http.ListenAndServe(":8080", nil)
 }
 
-func bookHotel(ctx context.Context) {
+func home(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context() // using the resquet context
+	log.Println("Iniciou minha request")
+	defer log.Println("Finalizou minha request")
+
 	select {
-	case <-ctx.Done(): // caso cancelado antes de 5 segundos, a ação não será executada
-		fmt.Println("Tempo exedido para bookar o quarto")
-	case <-time.After(time.Second * 5): // caso passe 5 segundos, o quarto será reservado
-		fmt.Println("Quarto reservado com sucesso")
+	case <-time.After(time.Second * 5):
+		log.Println("Requisição realizada com sucesso")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Requisição realizada com sucesso"))
+	case <-ctx.Done():
+		log.Println("Request cancelada")
+		http.Error(w, "Request cancelada", http.StatusRequestTimeout)
 	}
 }
