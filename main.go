@@ -8,13 +8,13 @@ import (
 
 func main() {
 	ctx := context.Background() // main context
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()
 
-	go func() {
-		time.Sleep(time.Second * 3)
-		cancel()
-	}()
+	// go func() {
+	// 	time.Sleep(time.Second * 3)
+	// 	cancel()
+	// }()
 
 	bookHotel(ctx)
 }
