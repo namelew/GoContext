@@ -1,28 +1,30 @@
 package main
 
 import (
+	"context"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
 func main() {
-	http.HandleFunc("/", home)
-	http.ListenAndServe(":8080", nil)
-}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
 
-func home(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context() // using the resquet context
-	log.Println("Iniciou minha request")
-	defer log.Println("Finalizou minha request")
-
-	select {
-	case <-time.After(time.Second * 5):
-		log.Println("Requisição realizada com sucesso")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Requisição realizada com sucesso"))
-	case <-ctx.Done():
-		log.Println("Request cancelada")
-		http.Error(w, "Request cancelada", http.StatusRequestTimeout)
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://localhost:8080", nil)
+	if err != nil {
+		log.Panic(err.Error())
 	}
+
+	res, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	defer res.Body.Close()
+
+	io.Copy(os.Stdout, res.Body)
 }
